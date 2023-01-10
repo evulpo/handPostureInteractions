@@ -1,0 +1,21 @@
+html, body {
+    margin: 0;
+    padding: 0;
+  }
+  canvas {
+    display: block;
+  }
+  
+  .info{
+    position:absolute;
+    top:890px;
+    left:250px;
+    color:#ff0099;
+    font-size: 24px;
+  }
+  .input_video{
+    position:absolute;
+    left:0px;
+    top:0px;
+  }
+  
