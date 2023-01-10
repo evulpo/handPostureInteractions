@@ -95,7 +95,7 @@ function displayResults(){
     } 
     // display bones when the array of landmarks is long enough
     if(lm.length>20){
-      displayBones();
+      //displayBones();
        
        /* 
         drawFinger(17, 20); // little finger
