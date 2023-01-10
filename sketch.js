@@ -95,8 +95,8 @@ function displayResults(){
     } 
     // display bones when the array of landmarks is long enough
     if(lm.length>20){
-      //displayBones();
-       
+      displayBones();
+      calculatePitchYawRoll();
        /* 
         drawFinger(17, 20); // little finger
         drawFinger(13, 16); // ring finger
@@ -111,7 +111,7 @@ function displayResults(){
 
 function displayBones(){
    
-    calculatePitchYawRoll();
+   
     stroke(255,100,100);
     strokeWeight(1);
     noFill();
