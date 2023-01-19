@@ -27,6 +27,7 @@ let smooth_slider;
 let box_pos;
 let locked = false;
 let box_size = 120;
+let displayBonesFlag=false;
 // Set up the canvas
 function setup() {
   
@@ -171,7 +172,10 @@ function displayResults(){
     } 
     // display bones when the array of landmarks is long enough
     if(lm.length>20){
-      displayBones();
+      if(displayBonesFlag){
+        displayBones();
+      }
+      
       /* discarded method */
       // calculatePitchYawRoll();
       updateHandOrientation(lm);
@@ -188,6 +192,11 @@ function displayResults(){
   }
 }
 
+function keyPressed() {
+  if (key === 'b' || key == 'B') {
+    displayBonesFlag=!displayBonesFlag;
+  } 
+}
 function displayBones(){
     stroke(255,100,100);
     strokeWeight(1);
