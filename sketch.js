@@ -121,6 +121,12 @@ function draw() {
     normalMaterial();
     box(box_size,box_size,box_size);
     pop();
+
+    textFont(myFont);
+    textSize(16 );
+    noStroke();
+    fill(255,255,255);
+    text('signal smoother', -650, -380);
 }
 
 function updateHandOrientation(lm) {
@@ -344,6 +350,7 @@ const camera = new Camera(videoElement, {
   width: 160,
   height: 90
 });
+console.log(camera)
 camera.start();
   
 function distance(x1,y1,x2,y2){
