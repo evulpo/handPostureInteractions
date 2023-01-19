@@ -9,26 +9,31 @@ function preload() {
 }
 
 const videoElement = document.getElementsByClassName('input_video')[0];
-let pitch,yaw,roll=0;
-let compareD=0;
+let pitch,yaw,roll = 0;
+let compareD = 0;
 let xy = [250, 250];
 let p_xy = [0,0];
-let lmResults=false;
+let lmResults = false;
 let res;
-let dX=0;
-let dY=0;
-let dZ=0;
-let lm =[];
+let dX = 0;
+let dY = 0;
+let dZ = 0;
+let lm = [];
 let lm_old = [];
 let quat; // quaternion to store the hand's orientation
 let rotMatrix; // rotation matrix to store the rotation of the 3D box
 let smooth_value = 0.5;
+let smooth_slider;
+let box_pos;
+let locked = false;
+let box_size = 120;
 // Set up the canvas
 function setup() {
-    
-  createCanvas(1250, 900, WEBGL);
+  
+  createCanvas(window.innerWidth, window.innerHeight, WEBGL);
   textFont(myFont);
   // intializes collections for smoothing values
+  box_pos = {x:0,y:0,z:0};
   for(let i = 0; i< 21; i++){
     lm[i]={x:0,y:0,z:0};
     lm_old[i]={x:0,y:0,z:0};
@@ -36,11 +41,18 @@ function setup() {
   // initialize the quaternion and rotation matrix
   quat = new Quaternion();
   rotMatrix = new p5.Matrix();
+
+  smooth_slider = createSlider(0.1,0.99, smooth_value, 0.01);
+  smooth_slider.position(200, 50);
+  smooth_slider.style('width', '100px');
+  smooth_slider.style('height', '20px');
+  smooth_slider.style('background-color', '#ff0000');
 }
 
 // Run the hand tracker on every frame
 function draw() {
-  smooth_value = map(mouseX, 0, width, 0, 0.999 )
+  // smooth_value = map(mouseX, 0, width, 0, 0.999 )
+  smooth_value = smooth_slider.value();
     clear();
     push();
     translate(0,0,-100)
@@ -50,31 +62,55 @@ function draw() {
     strokeWeight(5);
     stroke(255,0,0);
     
-    line(0-width/4-200,0,compareD*500 -width/4-200,0);
+    line(0-width/4-400,0,compareD*500 -width/4-400,0);
     textSize(16);
     noStroke();
     fill(255,0,0);
-    text('pinch Delta : ' + compareD,0-width/4-200,0 - 20);
+    text('pinch Delta : ' + compareD,0-width/4-400,0 - 20);
     
+    let disttobox = 0;
+   
 
     displayResults();
     if(lm.length>20){
+      // on pinch
       if(compareD<0.02){
         dX = (lm[8].x*width + lm[4].x*width)/2 - width/2;
         dY = (lm[8].y*height + lm[4].y*height)/2 -height/2;
         dZ = (map(lm[8].z, -0.001, -0.2, -400,100)  +map(lm[8].z, -0.001, -0.2, -400,100) )/2;
+        disttobox = distance(dX, dY, box_pos.x,box_pos.y);
+        
+        if(disttobox<2000 && !locked){
+          locked = true;
+        }
 
-        fill(255)
-        text(dZ + ', '+ lm[8].z,100-width/2,100)
-        //map(lm[i].z, -0.3,0, 2,0.1);
+        if(locked){
+          box_pos.x = dX;
+          box_pos.y = dY;
+          box_pos.z = 0;
+        }
+        // fill(255)
+        // text(dZ + ', '+ lm[8].z,100-width/2,100)
+      }else{
+        if(locked){
+          locked=false;
+        }
       }
     }
-
+   
     push();
     noFill();
     strokeWeight(1);
     stroke(255,0,100);
-    translate(0+dX,0+dY,dZ);
+    if(locked && box_size<180){
+      box_size+=20;
+    }else{
+      if(!locked && box_size>100){
+        box_size-=20;
+      }
+    }
+    
+    translate(box_pos.x, box_pos.y, box_pos.z);
 
     
     // rotateX(pitch);
@@ -83,9 +119,8 @@ function draw() {
 
     applyMatrix(rotMatrix);
     normalMaterial();
-    box(170, 170,170);
+    box(box_size,box_size,box_size);
     pop();
-  
 }
 
 function updateHandOrientation(lm) {
@@ -131,7 +166,8 @@ function displayResults(){
     // display bones when the array of landmarks is long enough
     if(lm.length>20){
       displayBones();
-      calculatePitchYawRoll();
+      /* discarded method */
+      // calculatePitchYawRoll();
       updateHandOrientation(lm);
       // console.log(rotMatrix);
        /* 
@@ -252,18 +288,18 @@ function calculatePitchYawRoll(){
   const y2 = lm[0].y;
   const z1 = lm[9].z;
   const z2 = lm[0].z;
-   pitch = Math.atan2(y1 - y2, z1 - z2);
-   yaw = Math.atan2(x1 - x2, z1 - z2);
-   roll = Math.atan2(y1 - y2, x1 - x2);
+  pitch = Math.atan2(y1 - y2, z1 - z2);
+  yaw = Math.atan2(x1 - x2, z1 - z2);
+  roll = Math.atan2(y1 - y2, x1 - x2);
   
   textFont(myFont);
   textSize(16 );
   noStroke();
   fill(0,0,255);
-
-  text('pitch:' + radians_to_degrees(pitch) , 150-width/2,150-height/2);
-  text('yaw:' + radians_to_degrees(yaw) , 150-width/2,175-height/2);
-  text('roll' +radians_to_degrees(roll) , 150-width/2,200-height/2);
+  /* printing pitch yaw roll texts */
+  // text('pitch:' + radians_to_degrees(pitch) , 150-width/2,150-height/2);
+  // text('yaw:' + radians_to_degrees(yaw) , 150-width/2,175-height/2);
+  // text('roll' +radians_to_degrees(roll) , 150-width/2,200-height/2);
 }
 
 function onResults(results) {
@@ -272,7 +308,7 @@ function onResults(results) {
       lmResults=true;
       for (const landmarks of results.multiHandLandmarks) {
         for(let i = 0; i< landmarks.length ; i ++){
-            // smoothing values
+            /* smoothing values */
             let _x = landmarks[i].x*(1-smooth_value) + lm_old[i].x*smooth_value;
             let _y = landmarks[i].y*(1-smooth_value) + lm_old[i].y*smooth_value;
             let _z = landmarks[i].z*(1-smooth_value) + lm_old[i].z*smooth_value;
@@ -286,7 +322,7 @@ function onResults(results) {
         }
       }
     }
-    // smoothing values
+    /* smoothing values */
     lm_old=lm;
 }
 

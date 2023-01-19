@@ -7,11 +7,12 @@ html, body {
   }
   
   .info{
+    font-family: sans-serif;
     position:absolute;
     top:890px;
-    left:250px;
-    color:#ff0099;
-    font-size: 24px;
+    left:50px;
+    color:#aaa;
+    font-size: 16px;
   }
   .input_video{
     position:absolute;
