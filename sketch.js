@@ -1,4 +1,7 @@
 // loads font to be able to use it in WEBGL
+// reference
+//  https://github.com/infusion/Quaternion.js
+
 let myFont;
 function preload() {
     myFont =
@@ -16,11 +19,17 @@ let dX=0;
 let dY=0;
 let dZ=0;
 let lm =[];
+let quat; // quaternion to store the hand's orientation
+let rotMatrix; // rotation matrix to store the rotation of the 3D box
 // Set up the canvas
 function setup() {
     
   createCanvas(1250, 900, WEBGL);
   textFont(myFont);
+
+  // initialize the quaternion and rotation matrix
+  quat = new Quaternion();
+  rotMatrix = new p5.Matrix();
 }
 
 // Run the hand tracker on every frame
@@ -61,19 +70,38 @@ function draw() {
     translate(0+dX,0+dY,dZ);
 
     
-    rotateX(pitch);
-    rotateY(yaw);
-    rotateZ(roll);
-    //rotateX(90);
-    // rotateZ(verticalRotation);
-    //rotateX(-horizontalRotation*5);
-    //rotateZ(-horizontalRotation*4.5);
-    //  rotateZ(-horizontalRotation*4.5);
+    // rotateX(pitch);
+    // rotateY(yaw);
+    // rotateZ(roll);
+
+    applyMatrix(rotMatrix);
     normalMaterial();
     box(170, 170,170);
     pop();
   
 }
+
+function updateHandOrientation(lm) {
+    // lm is an array containing the landmarks of the hand
+
+    // define the two vectors for the bone between the landmarks and the reference bone
+    let boneVector = createVector(lm[9].x - lm[0].x, lm[9].y - lm[0].y, lm[9].z - lm[0].z);
+    let referenceVector = createVector(1, 1,1);
+
+    // calculate the cross product between the two vectors to obtain the rotation axis
+    let rotationAxis = boneVector.cross(referenceVector);
+
+    // calculate the angle between the two vectors to obtain the rotation angle
+    let rotationAngle = boneVector.angleBetween(referenceVector);
+
+    // create a quaternion from the rotation axis and angle
+    quat = Quaternion.fromAxisAngle([rotationAxis.x, rotationAxis.y,rotationAxis.z], rotationAngle);
+
+    // convert the quaternion to a rotation matrix
+    rotMatrix = quat.toMatrix4();
+
+}
+
 
 function displayResults(){
   if(lmResults){
@@ -97,6 +125,8 @@ function displayResults(){
     if(lm.length>20){
       displayBones();
       calculatePitchYawRoll();
+      updateHandOrientation(lm);
+      // console.log(rotMatrix);
        /* 
         drawFinger(17, 20); // little finger
         drawFinger(13, 16); // ring finger
@@ -110,8 +140,6 @@ function displayResults(){
 }
 
 function displayBones(){
-   
-   
     stroke(255,100,100);
     strokeWeight(1);
     noFill();
@@ -188,10 +216,8 @@ function displayBones(){
     /* finish palm */
 }
 
-
 /* recursive function to draw independent fingers  based on the above hardcoded method */
 /* provided by GPTchat */
-
 function drawFinger(startIndex, endIndex) {
     stroke(255,100,100);
     strokeWeight(1);
@@ -212,8 +238,6 @@ function drawFinger(startIndex, endIndex) {
     drawFinger(startIndex + 1, endIndex);
 }
   
-
-
 function calculatePitchYawRoll(){
   const x1 = lm[9].x;
   const x2 = lm[0].x;
@@ -235,7 +259,6 @@ function calculatePitchYawRoll(){
   text('roll' +radians_to_degrees(roll) , 150-width/2,200-height/2);
 }
 
-
 function onResults(results) {
     
     if (results.multiHandLandmarks) {
@@ -252,10 +275,6 @@ function onResults(results) {
       }
     }
 }
-
-
-
-
 
 const hands = new Hands({locateFile: (file) => {
   return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
@@ -276,8 +295,6 @@ const camera = new Camera(videoElement, {
   height: 90
 });
 camera.start();
-
-  
   
 function distance(x1,y1,x2,y2){
   let dx = x2-x1
