@@ -19,14 +19,20 @@ let dX=0;
 let dY=0;
 let dZ=0;
 let lm =[];
+let lm_old = [];
 let quat; // quaternion to store the hand's orientation
 let rotMatrix; // rotation matrix to store the rotation of the 3D box
+let smooth_value = 0.5;
 // Set up the canvas
 function setup() {
     
   createCanvas(1250, 900, WEBGL);
   textFont(myFont);
-
+  // intializes collections for smoothing values
+  for(let i = 0; i< 21; i++){
+    lm[i]={x:0,y:0,z:0};
+    lm_old[i]={x:0,y:0,z:0};
+  }
   // initialize the quaternion and rotation matrix
   quat = new Quaternion();
   rotMatrix = new p5.Matrix();
@@ -34,6 +40,7 @@ function setup() {
 
 // Run the hand tracker on every frame
 function draw() {
+  smooth_value = map(mouseX, 0, width, 0, 0.999 )
     clear();
     push();
     translate(0,0,-100)
@@ -264,8 +271,13 @@ function onResults(results) {
     if (results.multiHandLandmarks) {
       lmResults=true;
       for (const landmarks of results.multiHandLandmarks) {
-        lm=landmarks;
         for(let i = 0; i< landmarks.length ; i ++){
+            // smoothing values
+            let _x = landmarks[i].x*(1-smooth_value) + lm_old[i].x*smooth_value;
+            let _y = landmarks[i].y*(1-smooth_value) + lm_old[i].y*smooth_value;
+            let _z = landmarks[i].z*(1-smooth_value) + lm_old[i].z*smooth_value;
+           
+            lm[i] = {x: _x, y:_y, z:_z};
             compareD = distance(landmarks[8].x, landmarks[8].y,  landmarks[4].x, landmarks[4].y)
             if(compareD<=0.01){
               xy[0] = (landmarks[4].x + landmarks[8].x) / 2 *640;
@@ -274,6 +286,8 @@ function onResults(results) {
         }
       }
     }
+    // smoothing values
+    lm_old=lm;
 }
 
 const hands = new Hands({locateFile: (file) => {
